@@ -218,7 +218,8 @@ class XunleiClient(object):
 		self.page_size = self.default_page_size
 		self.bt_page_size = self.default_bt_page_size
 
-		self.limit = None
+		#self.limit = None
+		self.limit = 1
 
 		self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookiejar))
 		self.verification_code_reader = verification_code_reader
@@ -478,7 +479,7 @@ class XunleiClient(object):
 		if total_pages == 0:
 			total_pages = 1
 		for page_index in range(1, total_pages):
-			current_page = self.read_task_page_info_by_page_index(type_id, 0, page_size)
+			current_page = self.read_task_page_info_by_page_index(type_id, page_index, page_size)
 			all_tasks.extend(current_page['tasks'])
 		if limit:
 			all_tasks = all_tasks[0:limit]
@@ -865,6 +866,8 @@ def current_random():
 
 def convert_task(data):
 	expired = {'0':False, '4': True}[data['flag']]
+	if not data['url']:
+	 	data['url'] = data['lixian_url']
 	assert re.match(r'[^:]+', data['url']), 'Invalid URL in: ' + repr(data)
 	task = {'id': data['id'],
 			'type': re.match(r'[^:]+', data['url']).group().lower(),
@@ -873,7 +876,7 @@ def convert_task(data):
 			'status_text': {'0':'waiting', '1':'downloading', '2':'completed', '3':'failed', '5':'pending'}[data['download_status']],
 			'expired': expired,
 			'size': int(data['ysfilesize']),
-			'original_url': unescape_html(data['url']),
+			'original_url': data['lixian_url'],
 			'xunlei_url': data['lixian_url'] or None,
 			'bt_hash': data['cid'],
 			'dcid': data['cid'],
@@ -1088,4 +1091,3 @@ def decode_dirty_name(x):
 			return x
 	except:
 		return x
-
